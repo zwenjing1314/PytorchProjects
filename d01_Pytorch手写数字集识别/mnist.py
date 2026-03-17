@@ -8,6 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+# from utils import SimpleMNIST
+
 """
 torchvision 是 PyTorch 的官方计算机视觉扩展库，主要提供：
 1. 数据集 (torchvision.datasets)
@@ -39,17 +41,34 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("device:", device)
 
 # 2. 数据集
-transform = transforms.Compose([
+"""
+1. 归一化计算过程
+normalized_pixel = (pixel - mean) / std
+2. 为什么要进行归一化？
+原始图片像素值范围：[0, 1]（ToTensor() 之后）
+           ↓
+减去均值 0.1307：
+   - 原来 0 的像素 → -0.1307
+   - 原来 1 的像素 → 0.8693
+   - 数据分布中心从 0.5 移到接近 0
+           ↓
+除以标准差 0.3081：
+   - 数据被缩放到标准正态分布 N(0, 1)
+   - 大部分数据落在 [-1, 1] 区间
+           ↓
+输入到神经网络
+"""
+transform = transforms.Compose([  # TODO: 注意 这里面是一个列表，不能在这里面进行多行注释
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,))
 ])
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST(
-        root="./data",
-        train=True,
-        download=True,
-        transform=transform
+        root="./data",  # 数据存储的根目录
+        train=True,  # True=训练集 (60000 张)，False=测试集 (10000 张)
+        download=True,  # 如果数据不存在，自动下载
+        transform=transform  # 对每张应用的预处理操作
     ),
     batch_size=64,
     shuffle=True,
@@ -98,7 +117,7 @@ images, labels = next(dataiter)
 
 
 # 4. 定义网络
-class Net(nn.Module):
+class Net(nn.Module):  # LeNet-5 网络架构
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 6, 5)  # 28x28 -> 24x24

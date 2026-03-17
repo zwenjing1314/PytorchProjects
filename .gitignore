@@ -1,3 +1,8 @@
 /d01_Pytorch手写数字集识别/data/*
-!data/.gitkeep
+/d01_Pytorch手写数字集识别/!data/.gitkeep
+/d01_Pytorch手写数字集识别/__pycache__/*
 .idea
+
+/d02_cifar10数据集分类/data/*
+/d02_cifar10数据集分类/.ipynb_checkpoints/*
+/d02_cifar10数据集分类/!data/.gitkeep
