@@ -1,8 +1,13 @@
-/d01_Pytorch手写数字集识别/data/*
-/d01_Pytorch手写数字集识别/!data/.gitkeep
-/d01_Pytorch手写数字集识别/__pycache__/*
 .idea
+
+/d01_minst手写数字集识别/data/*
+/d01_minst手写数字集识别/!data/.gitkeep
+/d01_minst手写数字集识别/__pycache__/*
+
 
 /d02_cifar10数据集分类/data/*
 /d02_cifar10数据集分类/.ipynb_checkpoints/*
 /d02_cifar10数据集分类/!data/.gitkeep
+
+/d03_微调和特征提取器构建自己的模型/data/*
+/d03_微调和特征提取器构建自己的模型/!data/.gitkeep
