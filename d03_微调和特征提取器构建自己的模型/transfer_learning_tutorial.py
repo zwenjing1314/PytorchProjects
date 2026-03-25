@@ -19,6 +19,7 @@ import copy
 cudnn.benchmark = True
 plt.ion()  # interactive mode
 
+# 利用了字典将 train 和 val 同时进行操作
 # 在训练集上：扩充、归一化
 # 在验证集上：归一化
 data_transforms = {  # 定义一个数据转换器
@@ -76,7 +77,7 @@ def imshow(inp, title=None):
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
     inp = std * inp + mean
-    inp = np.clip(inp, 0, 1)
+    inp = np.clip(inp, 0, 1)  # 将图片范围限制在 [0, 1]
     plt.imshow(inp)
     if title is not None:
         plt.title(title)
@@ -150,7 +151,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                         optimizer.step()
 
                 # 统计loss、准确率
-                running_loss += loss.item() * inputs.size(0)
+                running_loss += loss.item() * inputs.size(0)  # 平均损失 * 批次大小
                 running_corrects += torch.sum(preds == labels.data)
 
             """"
@@ -201,30 +202,74 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
 
 def visualize_model(model, num_images=6):
-    was_training = model.training
-    model.eval()
-    images_so_far = 0
-    fig = plt.figure()
+    """
+    可视化模型的预测结果
 
-    with torch.no_grad():
+    参数:
+        model: 训练好的 PyTorch 模型
+        num_images: 要显示的图片数量，默认为 6 张
+    """
+    # ========== 步骤 1: 保存并设置模型模式 ==========
+    was_training = model.training  # 保存当前训练状态（True/False）
+    # eval() 的作用：
+    # - 关闭 Dropout 层（不再随机丢弃神经元）
+    # - 固定 BatchNorm 层的统计量（使用训练好的均值和方差）
+    # 确保预测结果稳定一致
+    model.eval()  # 切换到评估模式
+    images_so_far = 0   # 已显示的图片计数器
+    fig = plt.figure()   # 创建一个新的图形窗口
+
+    # ========== 步骤 2: 禁用梯度计算 ==========
+    with torch.no_grad():   # 上下文管理器，不计算梯度
+        # 好处：
+        # 1. 节省内存（不需要存储计算图）
+        # 2. 加速计算（跳过梯度相关的运算）
+        # 3. 评估时本来就不需要反向传播
+
+        # ========== 步骤 3: 遍历验证集数据 ==========
         for i, (inputs, labels) in enumerate(dataloaders['val']):
+            # inputs shape: (batch_size, 3, 224, 224)
+            # labels shape: (batch_size,)
             inputs = inputs.to(device)
             labels = labels.to(device)
 
             outputs = model(inputs)
+            # torch.max 返回两个值：(最大值，最大值的索引)
+            # _ : 最大值（我们不需要）
+            # preds: 最大值的索引 → 预测的类别标签
+            # dim=1 表示在类别维度上找最大值
+            # 示例：
+            # outputs = [[0.3, 0.7],    → preds = [1, 0]
+            #            [0.8, 0.2]]       第 1 张预测为类别 1，第 2 张预测为类别 0
             _, preds = torch.max(outputs, 1)
 
-            for j in range(inputs.size()[0]):
+            # ========== 步骤 5: 逐张图片可视化 ==========
+            for j in range(inputs.size()[0]):  # 遍历 batch 中的每张图片
+                # inputs.size()[0] = batch_size
+                # 例如：如果 batch_size=4，则 j=0,1,2,3
                 images_so_far += 1
+
+                # 创建子图并显示图片
                 ax = plt.subplot(num_images // 2, 2, images_so_far)
                 ax.axis('off')
+
+                # 设置标题显示预测结果
                 ax.set_title(f'predicted: {class_names[preds[j]]}')
+                # 显示图片
                 imshow(inputs.cpu().data[j])
 
+                # ========== 步骤 6: 检查是否达到目标数量 ==========
                 if images_so_far == num_images:
                     model.train(mode=was_training)
                     return
+
+            # 如果当前 batch 的图片不够，继续下一个 batch
+            # （一个 batch 可能只有 4 张，但我们需要显示 6 张）
+
+        # ========== 步骤 7: 遍历完所有数据后的清理 ==========
         model.train(mode=was_training)
+        # 如果之前是训练模式，现在切回训练模式
+        # 这样后续的训练代码不会受影响
 
 
 model = models.resnet18(pretrained=True)  # 加载预训练模型
@@ -248,7 +293,7 @@ for param in model_conv.parameters(): # 锁定模型所有参数
     param.requires_grad = False
 
 num_ftrs = model_conv.fc.in_features  # 获取低级特征维度
-model_conv.fc = nn.Linear(num_ftrs, 2) # 替换新的输出层
+model_conv.fc = nn.Linear(num_ftrs, 2)  # 替换新的输出层
 
 model_conv = model_conv.to(device)
 
