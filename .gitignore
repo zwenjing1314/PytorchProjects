@@ -1,4 +1,5 @@
 .idea
+.vscode
 
 /d01_minst手写数字集识别/data/*
 /d01_minst手写数字集识别/!data/.gitkeep
@@ -15,3 +16,6 @@
 
 /d04_循环神经网络的应用案例/data/*
 /d04_循环神经网络的应用案例/!data/.gitkeep
+/d04_循环神经网络的应用案例/rnn_name_generator.pth
+
+/d05_视觉图像检测基于Mask_R-CNN/data/*
