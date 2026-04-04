@@ -38,7 +38,7 @@ def findFiles(path: os.path) -> list:
     return glob.glob(path)
 
 
-# for filename in findFiles('data/names/*.txt'):
+# for filename in findFiles('datas/names/*.txt'):
 #     print( filename)
 
 for filename in findFiles('data/names/*.txt'):

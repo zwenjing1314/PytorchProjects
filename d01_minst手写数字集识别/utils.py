@@ -9,7 +9,7 @@ from torchvision import datasets, transforms
 
 
 class ManualMNIST(Dataset):
-    def __init__(self, root='./data', train=True, transform=None):
+    def __init__(self, root='./datas', train=True, transform=None):
         super().__init__()
         self.transform = transform
 
@@ -70,8 +70,8 @@ transform = transforms.Compose([
 ])
 
 # 创建数据集
-manual_train_dataset = ManualMNIST(root='./data', train=True, transform=transform)
-manual_test_dataset = ManualMNIST(root='./data', train=False, transform=transform)
+manual_train_dataset = ManualMNIST(root='./datas', train=True, transform=transform)
+manual_test_dataset = ManualMNIST(root='./datas', train=False, transform=transform)
 
 # 创建 DataLoader
 manual_train_loader = DataLoader(
@@ -96,7 +96,7 @@ print(f"Batch shape: {images.shape}, Labels shape: {labels.shape}")
 
 # 更简单的方法：直接读取 PyTorch 处理好的文件
 class SimpleMNIST(Dataset):
-    def __init__(self, root='./data', train=True, transform=None):
+    def __init__(self, root='./datas', train=True, transform=None):
         super().__init__()
         self.transform = transform
 

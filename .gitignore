@@ -19,3 +19,7 @@
 /d04_循环神经网络的应用案例/rnn_name_generator.pth
 
 /d05_视觉图像检测基于Mask_R-CNN/data/*
+/d05_视觉图像检测基于Mask_R-CNN/__pycache__/*
+
+/d06_人脸检测与识别/data/*
+/d06_人脸检测与识别/datas/*

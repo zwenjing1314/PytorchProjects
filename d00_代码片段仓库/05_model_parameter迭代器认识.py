@@ -49,7 +49,7 @@
 # print(f"weight.shape: {linear.weight.shape}")
 # # torch.Size([2, 3])
 #
-# print(f"weight.data:\n{linear.weight.data}")
+# print(f"weight.datas:\n{linear.weight.datas}")
 # # tensor([[...], [...]])
 #
 # print("\n=== bias 属性 ===")
@@ -59,7 +59,7 @@
 # print(f"bias.shape: {linear.bias.shape}")
 # # torch.Size([2])
 #
-# print(f"bias.data:\n{linear.bias.data}")
+# print(f"bias.datas:\n{linear.bias.datas}")
 # # tensor([...])
 
 

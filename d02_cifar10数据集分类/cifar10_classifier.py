@@ -21,7 +21,7 @@ import torch.optim as optim
     ↓ 解压
 pickle 二进制文件 (data_batch_1~5, test_batch)
     ↓ 读取
-字典格式 {'data': (10000, 3072), 'labels': (10000,)}
+字典格式 {'datas': (10000, 3072), 'labels': (10000,)}
     ↓ reshape & transpose
 未归一化图像 (10000, 3, 32, 32), 范围 [0, 255]
     ↓ ToTensor()
@@ -38,11 +38,11 @@ transform = transforms.Compose(  # 数据变换操作
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
 )
 
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+trainset = torchvision.datasets.CIFAR10(root='./datas', train=True,
                                         download=True, transform=transform)  # 图片像素值范围 [0, 1] -> [-1, 1]
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+testset = torchvision.datasets.CIFAR10(root='./datas', train=False,
                                        download=True, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=4,
                                          shuffle=False, num_workers=2)
