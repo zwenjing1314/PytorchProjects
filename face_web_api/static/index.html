@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>人脸检测与相似度检索</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">FastAPI + FaceNet</p>
+          <h1>人脸检测与相似度检索平台</h1>
+          <p class="subtitle">
+            左侧做人脸检查，右侧做人脸 Top-K 检索。相似度检索时会自动入库，并按文件名去重。
+          </p>
+        </div>
+      </header>
+
+      <section class="panels">
+        <article class="panel">
+          <div class="panel-header">
+            <h2>功能一：人脸检查</h2>
+            <p>返回检测到的人脸、边界框和置信度。</p>
+          </div>
+
+          <form id="detect-form" class="form-card">
+            <label class="file-field">
+              <span>选择图片</span>
+              <input type="file" id="detect-file" accept="image/*" required />
+            </label>
+            <button type="submit">开始检测</button>
+          </form>
+
+          <div id="detect-status" class="status"></div>
+          <div id="detect-result" class="result"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2>功能三：相似度检索</h2>
+            <p>上传后自动入库，随后在数据库里检索最相似的前 Top-K 张图片。</p>
+          </div>
+
+          <form id="search-form" class="form-card">
+            <label class="file-field">
+              <span>选择图片</span>
+              <input type="file" id="search-file" accept="image/*" required />
+            </label>
+            <label class="file-field">
+              <span>Top-K</span>
+              <input type="number" id="top-k" min="1" max="20" value="5" />
+            </label>
+            <button type="submit">开始检索</button>
+          </form>
+
+          <div id="search-status" class="status"></div>
+          <div id="search-result" class="result"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
