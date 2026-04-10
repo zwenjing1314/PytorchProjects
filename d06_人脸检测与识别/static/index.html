@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>人脸检测与相似度检索 Demo</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --accent: #2563eb;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --border: rgba(0, 0, 0, 0.1);
+            --text: #111827;
+        }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", sans-serif;
+            background: linear-gradient(120deg, #eef2ff, #fdf2f8);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .app {
+            display: flex;
+            flex-wrap: wrap;
+            min-height: 100vh;
+        }
+        .panel {
+            flex: 1 1 400px;
+            padding: 24px;
+            box-sizing: border-box;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border);
+        }
+        .panel:last-child {
+            border-right: none;
+        }
+        h2 {
+            margin-top: 0;
+        }
+        .upload-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        input[type="file"] {
+            flex: 1;
+        }
+        button {
+            background: var(--accent);
+            border: none;
+            padding: 10px 16px;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .preview {
+            position: relative;
+            width: 100%;
+            max-height: 380px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .preview img,
+        .preview canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .preview canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+        }
+        .faces-list,
+        .matches-list {
+            display: grid;
+            gap: 12px;
+        }
+        .face-card,
+        .match-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #fff;
+        }
+        .face-card img,
+        .match-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        .status {
+            min-height: 20px;
+            font-size: 0.95rem;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+        label {
+            font-size: 0.95rem;
+        }
+        .topk-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 6px 8px;
+        }
+        @media (max-width: 980px) {
+            .app {
+                flex-direction: column;
+            }
+            .panel {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            .panel:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <section class="panel" id="panel-detect">
+        <h2>功能一：人脸检测 + 自动入库</h2>
+        <p>上传任意图片，后端将检测所有人脸、绘制框并把原图和特征向量保存到数据库（按文件名去重）。</p>
+        <div class="upload-group">
+            <input type="file" id="detect-file" accept="image/*">
+            <button id="detect-btn">检测</button>
+        </div>
+        <div class="status" id="detect-status"></div>
+        <div class="preview">
+            <img id="detect-image" alt="待检测图片预览">
+            <canvas id="detect-canvas"></canvas>
+        </div>
+        <div class="faces-list" id="faces-list"></div>
+    </section>
+
+    <section class="panel" id="panel-similarity">
+        <h2>功能三：相似度检索（Top-K）</h2>
+        <p>右侧上传的图片不会写入数据库，仅用于与历史库中所有图片的特征向量进行匹配。</p>
+        <div class="upload-group">
+            <input type="file" id="match-file" accept="image/*">
+            <button id="match-btn">检索</button>
+        </div>
+        <div class="topk-input">
+            <label for="topk-input">Top-K:</label>
+            <input type="number" id="topk-input" min="1" max="20" value="3">
+        </div>
+        <div class="status" id="match-status"></div>
+        <div class="matches-list" id="matches-list"></div>
+    </section>
+</div>
+
+<script>
+    const detectFile = document.getElementById('detect-file');
+    const detectBtn = document.getElementById('detect-btn');
+    const detectStatus = document.getElementById('detect-status');
+    const detectImage = document.getElementById('detect-image');
+    const detectCanvas = document.getElementById('detect-canvas');
+    const facesList = document.getElementById('faces-list');
+
+    const matchFile = document.getElementById('match-file');
+    const matchBtn = document.getElementById('match-btn');
+    const matchStatus = document.getElementById('match-status');
+    const topkInput = document.getElementById('topk-input');
+    const matchesList = document.getElementById('matches-list');
+
+    let lastDetection = null;
+
+    detectBtn.addEventListener('click', async () => {
+        if (!detectFile.files.length) {
+            detectStatus.textContent = '请先选择一张图片。';
+            return;
+        }
+        const file = detectFile.files[0];
+        detectBtn.disabled = true;
+        detectStatus.textContent = '检测中...';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await fetch('/faces/detect', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error((await response.json()).detail || '检测失败');
+            }
+            const data = await response.json();
+            lastDetection = data;
+            renderDetectionResult(file, data);
+        } catch (err) {
+            detectStatus.textContent = err.message;
+            console.error(err);
+        } finally {
+            detectBtn.disabled = false;
+        }
+    });
+
+    function renderDetectionResult(file, data) {
+        const objectUrl = URL.createObjectURL(file);
+        detectImage.onload = () => {
+            drawBoxes(data.faces || [], data.image_size);
+            URL.revokeObjectURL(objectUrl);
+        };
+        detectImage.src = objectUrl;
+
+        detectStatus.textContent = data.storage?.stored
+            ? `已保存：${data.storage.filename}`
+            : `未写入（原因：${data.storage?.reason || '未知'})`;
+
+        facesList.innerHTML = '';
+        (data.faces || []).forEach((face, idx) => {
+            const card = document.createElement('div');
+            card.className = 'face-card';
+            const img = document.createElement('img');
+            img.src = `data:image/png;base64,${face.thumbnail}`;
+            const meta = document.createElement('div');
+            meta.innerHTML = `<strong>人脸 ${idx + 1}</strong><br>置信度：${face.probability.toFixed(4)}`;
+            card.appendChild(img);
+            card.appendChild(meta);
+            facesList.appendChild(card);
+        });
+        if (!data.faces?.length) {
+            facesList.innerHTML = '<p>没有检测到人脸。</p>';
+        }
+    }
+
+    function drawBoxes(faces, imageSize) {
+        const ctx = detectCanvas.getContext('2d');
+        const { width: imageWidth = 0, height: imageHeight = 0 } = imageSize || {};
+        const displayWidth = detectImage.clientWidth || detectImage.naturalWidth;
+        const displayHeight = detectImage.clientHeight || detectImage.naturalHeight;
+        detectCanvas.width = displayWidth;
+        detectCanvas.height = displayHeight;
+        ctx.clearRect(0, 0, displayWidth, displayHeight);
+        const scaleX = displayWidth / (imageWidth || 1);
+        const scaleY = displayHeight / (imageHeight || 1);
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2;
+        faces.forEach(face => {
+            const { x1, y1, x2, y2 } = face.box;
+            ctx.strokeRect(
+                x1 * scaleX,
+                y1 * scaleY,
+                (x2 - x1) * scaleX,
+                (y2 - y1) * scaleY
+            );
+        });
+    }
+
+    matchBtn.addEventListener('click', async () => {
+        if (!matchFile.files.length) {
+            matchStatus.textContent = '请先选择一张图片。';
+            return;
+        }
+        const file = matchFile.files[0];
+        const topk = Number(topkInput.value) || 3;
+        matchBtn.disabled = true;
+        matchStatus.textContent = '检索中...';
+        matchesList.innerHTML = '';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await fetch(`/faces/similar?top_k=${topk}`, {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error((await response.json()).detail || '检索失败');
+            }
+            const data = await response.json();
+            renderMatches(data.matches || []);
+        } catch (err) {
+            matchStatus.textContent = err.message;
+            console.error(err);
+        } finally {
+            matchBtn.disabled = false;
+        }
+    });
+
+    function renderMatches(matches) {
+        if (!matches.length) {
+            matchStatus.textContent = '数据库为空或未找到相似人脸。';
+            return;
+        }
+        matchStatus.textContent = `返回 ${matches.length} 条结果`;
+        matchesList.innerHTML = '';
+        matches.forEach((match, idx) => {
+            const card = document.createElement('div');
+            card.className = 'match-card';
+            const img = document.createElement('img');
+            img.src = match.image ? `data:image/png;base64,${match.image}` : '';
+            const meta = document.createElement('div');
+            meta.innerHTML = `<strong>${idx + 1}. ${match.filename}</strong><br>距离：${match.distance.toFixed(4)}`;
+            card.appendChild(img);
+            card.appendChild(meta);
+            matchesList.appendChild(card);
+        });
+    }
+</script>
+</body>
+</html>

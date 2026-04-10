@@ -23,3 +23,5 @@
 
 /d06_人脸检测与识别/data/*
 /d06_人脸检测与识别/datas/*
+
+/d07_利用DCGAN生成假脸/data/celeba/*

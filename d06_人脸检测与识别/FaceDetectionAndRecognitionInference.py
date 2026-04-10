@@ -112,3 +112,5 @@ dists = [[(e1 - e2).norm().item() for e2 in embeddings] for e1 in embeddings]
 # 同一人的不同照片之间距离应该很小
 # 不同人之间的距离应该较大
 print(pd.DataFrame(dists, columns=names, index=names))
+
+
