@@ -1,0 +1,16 @@
+
+
+tensorflow版本的pix2pix教程：
+https://www.tensorflow.org/tutorials/generative/pix2pix
+
+开源代码：
+https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
+
+pix2pix论文：
+https://arxiv.org/pdf/1611.07004.pdf
+
+Pix2Pix原理分析与代码解读：
+https://zhuanlan.zhihu.com/p/150616738
+
+Pix2Pix图图转换网络原理分析与pytorch实现：
+https://zhuanlan.zhihu.com/p/90300175

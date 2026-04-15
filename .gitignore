@@ -1,5 +1,6 @@
 .idea
 .vscode
+__pycache__
 
 /d01_minst手写数字集识别/data/*
 /d01_minst手写数字集识别/!data/.gitkeep
