@@ -7,19 +7,19 @@ from PIL import Image
 
 
 ROOT_DIR = Path(__file__).resolve().parent  # 获取当前文件名 -> 获取文件绝对路径 -> 获取文件父目录的绝对路径
-INPUT_DIR = ROOT_DIR / "CMP_facade_DB_base" / "base"
+INPUT_DIR = ROOT_DIR / "CMP_facade_DB_base" / "extended"
 OUTPUT_DIR = ROOT_DIR / "datas"
 
 
 def to_rgb(image: Image.Image) -> Image.Image:
     if image.mode == "RGB":
         return image
-    if image.mode in ("RGBA", "LA"):
-        background = Image.new("RGB", image.size, "white")
-        alpha = image.getchannel("A")
-        background.paste(image.convert("RGBA"), mask=alpha)
+    if image.mode in ("RGBA", "LA"):  # "RGBA" = 4 通道（R, G, B, A）； "LA" = 2 通道（L, A） L 是亮度（灰度） A 是透明度
+        background = Image.new("RGB", image.size, "white")  # 创建新的图片，宽度为图片宽度，高度为图片高度，背景为白色
+        alpha = image.getchannel("A")  # 获取图片的alpha通道
+        background.paste(image.convert("RGBA"), mask=alpha)  # 将图片粘贴到新的图片上，mask为alpha通道
         return background
-    return image.convert("RGB")
+    return image.convert("RGB")  # 如果图片模式为RGB，则直接返回图片
 
 
 def collect_pairs(input_dir: Path) -> dict[str, tuple[Path, Path]]:  # 收集jpg和png文件，并返回字典，键为文件名，值为同stem名的jpg和png文件路径元组
@@ -58,8 +58,8 @@ def main() -> int:
         print(f"未找到可配对的 jpg/png 图片: {INPUT_DIR}")
         return 1
 
-    for stem, (jpg_path, png_path) in pairs.items():
-        output_path = OUTPUT_DIR / f"{stem}.jpeg"
+    for index, (stem, (jpg_path, png_path )) in enumerate(pairs.items(), start=379):
+        output_path = OUTPUT_DIR / f"{index}.jpeg"
         merge_pair(jpg_path, png_path, output_path)
         print(f"已生成: {output_path}")
 

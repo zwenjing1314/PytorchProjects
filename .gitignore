@@ -1,6 +1,9 @@
 .idea
 .vscode
 __pycache__
+*.pth
+*.pt
+.DS_Store
 
 /d01_minst手写数字集识别/data/*
 /d01_minst手写数字集识别/!data/.gitkeep
@@ -26,3 +29,7 @@ __pycache__
 /d06_人脸检测与识别/datas/*
 
 /d07_利用DCGAN生成假脸/data/celeba/*
+
+/d08_pix2pix为黑白图片上色/datas/*
+/d08_pix2pix为黑白图片上色/data/*
+/d08_pix2pix为黑白图片上色/CMP_facade_DB_base
